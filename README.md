@@ -2,6 +2,18 @@
 
 Homebrew tap for [Bronco](https://github.com/The-AI-Cowboys-Projects/Bronco) — agentic local-AI creative assistant.
 
+> **Private upstream.** The Bronco source repo is private. This tap pulls source over SSH using your existing GitHub SSH key, so installation only works if your GitHub account has been granted access to the upstream repo. See [Prerequisites](#prerequisites) below.
+
+## Prerequisites
+
+1. SSH access to the private Bronco repo. Verify with:
+   ```bash
+   ssh -T git@github.com   # should greet you by your username
+   git ls-remote git@github.com:The-AI-Cowboys-Projects/Bronco.git HEAD
+   ```
+   If the second command 404s or auth-fails, request access before continuing.
+2. Homebrew on macOS (Apple Silicon recommended; Intel works for text-only workloads).
+
 ## Install
 
 ```bash
@@ -9,7 +21,7 @@ brew tap The-AI-Cowboys-Projects/bronco
 brew install bronco
 ```
 
-The formula installs Bronco plus the `[web]` extra (FastAPI/uvicorn) into a private Homebrew-managed virtualenv. The `bronco` and `bronco-web` commands land on your `PATH`.
+The formula clones Bronco over SSH at the pinned tag, builds a private Homebrew-managed virtualenv, and installs Bronco plus the `[web]` extra (FastAPI/uvicorn). The `bronco` and `bronco-web` commands land on your `PATH`.
 
 ## After install
 

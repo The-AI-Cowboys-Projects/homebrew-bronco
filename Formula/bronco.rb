@@ -3,10 +3,16 @@ class Bronco < Formula
 
   desc "Agentic local-AI creative assistant — runs against Ollama"
   homepage "https://github.com/The-AI-Cowboys-Projects/Bronco"
-  url "https://github.com/The-AI-Cowboys-Projects/Bronco/archive/refs/tags/v0.2.0.tar.gz"
-  sha256 "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"
+  # Bronco's source repo is private. The formula fetches over SSH using
+  # the user's existing GitHub SSH key — same access model as a normal
+  # ``git clone``. Anonymous ``brew install`` will fail with a clear
+  # auth error, which is the desired behaviour: the tap is for users
+  # who already have access to the private upstream repo.
+  url "git@github.com:The-AI-Cowboys-Projects/Bronco.git",
+      tag:      "v0.3.0",
+      revision: "01c55ee2555066b838793ca85f32773f78a39456"
   license "MIT"
-  head "https://github.com/The-AI-Cowboys-Projects/Bronco.git", branch: "main"
+  head "git@github.com:The-AI-Cowboys-Projects/Bronco.git", branch: "main"
 
   # Runtime requirements:
   #   * python@3.12 — Bronco's pyproject pins ``requires-python = ">=3.12"``.
