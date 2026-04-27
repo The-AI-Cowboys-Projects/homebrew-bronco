@@ -3,16 +3,16 @@ class Bronco < Formula
 
   desc "Agentic local-AI creative assistant — runs against Ollama"
   homepage "https://github.com/The-AI-Cowboys-Projects/Bronco"
-  # Bronco's source repo is private. The formula fetches over SSH using
-  # the user's existing GitHub SSH key — same access model as a normal
-  # ``git clone``. Anonymous ``brew install`` will fail with a clear
-  # auth error, which is the desired behaviour: the tap is for users
-  # who already have access to the private upstream repo.
-  url "git@github.com:The-AI-Cowboys-Projects/Bronco.git",
+  # HTTPS + git strategy — Homebrew cannot use raw git@ SSH strings in ``url``.
+  # Private clones still work if GitHub credentials / SSH helper are configured for HTTPS.
+  url "https://github.com/The-AI-Cowboys-Projects/Bronco.git",
+      using:    :git,
       tag:      "v0.3.0",
       revision: "01c55ee2555066b838793ca85f32773f78a39456"
   license "MIT"
-  head "git@github.com:The-AI-Cowboys-Projects/Bronco.git", branch: "main"
+  head "https://github.com/The-AI-Cowboys-Projects/Bronco.git",
+       branch: "main",
+       using:  :git
 
   # Runtime requirements:
   #   * python@3.12 — Bronco's pyproject pins ``requires-python = ">=3.12"``.
@@ -31,13 +31,24 @@ class Bronco < Formula
     # rot fast. Instead we let pip resolve everything inside Bronco's
     # private virtualenv, which is the same dependency graph CI exercises
     # on every PR.
-    venv = virtualenv_create(libexec, "python3.12")
+    virtualenv_create(libexec, "python3.12")
 
     # Install Bronco itself with the ``[web]`` extra so ``bronco-web``
     # works out of the box. Heavy ML extras (image / video / audio /
     # memory) are documented in the caveats — they pull torch+diffusers
     # which is multiple GB and not appropriate as a default for everyone.
-    system libexec/"bin/pip", "install", "-v", "--no-cache-dir", "#{buildpath}[web]"
+    #
+    # Do not use {Virtualenv#pip_install}: it applies Homebrew
+    # ``std_pip_args`` (includes ``--no-deps``). This formula intentionally
+    # lets pip resolve the full graph from PyPI instead of hundreds of
+    # ``resource`` blocks — so we call brewed ``python3.12 -m pip`` targeting
+    # the venv (the venv is created ``--without-pip``, so there is no
+    # ``libexec/bin/pip`` yet).
+    cd buildpath do
+      system Formula["python@3.12"].opt_bin/"python3.12", "-m", "pip",
+             "--python=#{libexec}/bin/python",
+             "install", "-v", "--no-cache-dir", ".[web]"
+    end
 
     # Symlink the entry-point scripts (bronco, bronco-web, bronco-models)
     # into the brew prefix's ``bin``.
@@ -52,11 +63,12 @@ class Bronco < Formula
         ollama pull bronco-creative-v1    # default chat model
         bronco-web --port 8888            # then open http://localhost:8888
 
-      Optional extras add weight (each pulls torch / diffusers / chromadb):
-        #{libexec}/bin/pip install 'imaginairy>=15.0.0'                            # [image]
-        #{libexec}/bin/pip install 'diffusers>=0.34.0' 'imageio-ffmpeg>=0.5.0'     # [video]
-        #{libexec}/bin/pip install 'transformers>=4.45.0,<4.60.0' 'sentencepiece' # [audio]
-        #{libexec}/bin/pip install 'mempalace>=3.3.2'                              # [memory]
+      Optional extras add weight (each pulls torch / diffusers / chromadb)
+      (venv has no pip script — use brewed Python’s pip module):
+        #{Formula["python@3.12"].opt_bin}/python3.12 -m pip --python=#{libexec}/bin/python install 'imaginairy>=15.0.0'                            # [image]
+        #{Formula["python@3.12"].opt_bin}/python3.12 -m pip --python=#{libexec}/bin/python install 'diffusers>=0.34.0' 'imageio-ffmpeg>=0.5.0'     # [video]
+        #{Formula["python@3.12"].opt_bin}/python3.12 -m pip --python=#{libexec}/bin/python install 'transformers>=4.45.0,<4.60.0' 'sentencepiece' # [audio]
+        #{Formula["python@3.12"].opt_bin}/python3.12 -m pip --python=#{libexec}/bin/python install 'mempalace>=3.3.2'                              # [memory]
 
       Apple Silicon: add this to your shell rc so unsupported MPS
       operations fall back to CPU instead of erroring:
