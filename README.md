@@ -15,10 +15,7 @@ Homebrew tap for [Bronco](https://github.com/The-AI-Cowboys-Projects/Bronco) —
 ## Install
 
 ```bash
-# 1. Dependencies via Homebrew
-brew install ollama ffmpeg python@3.12
-
-# 2. Add the Bronco tap and install
+# 1. Add the Bronco tap and install
 brew tap The-AI-Cowboys-Projects/bronco
 brew install bronco
 
